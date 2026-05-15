@@ -113,6 +113,7 @@ export default function HomePage() {
     setShowRequest(false);
     if (rqStep === 5) {
       setShowBanner(true);
+      setActiveTab('requested');
     }
   }, [rqStep]);
 
@@ -121,15 +122,29 @@ export default function HomePage() {
     setSubmitError(null);
     try {
       const priority = selectedPriority.replace('🔥 ', '');
-      await createFeature({
+      const result = await createFeature({
         module: formModule,
         reqFor: formReqFor,
         description: descValue,
         priority,
         reqType: rqPref === 'paid' ? 'Customer' : 'Internal',
       });
+      // Directly inject into triage state — no async getBoard dependency
+      const newFeature: Feature = {
+        id: result.id,
+        title: descValue.trim().slice(0, 120) || 'Feature Request',
+        status: 'triage',
+        tags: [],
+        votes: 0,
+        module: formModule,
+        reqFor: formReqFor,
+        priority: priority as Feature['priority'],
+        reqType: (rqPref === 'paid' ? 'Customer' : 'Internal') as Feature['reqType'],
+        createdAt: new Date().toISOString().slice(0, 10),
+        targetRelease: '',
+      };
+      setFeatures(prev => ({ ...prev, triage: [newFeature, ...(prev.triage ?? [])] }));
       setRqStep(5);
-      getBoard().then(board => setFeatures(board)).catch(() => {});
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
     } finally {
