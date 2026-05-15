@@ -16,7 +16,7 @@ export async function GET() {
       `/api/objects/${OBJECT_ID}/records?limit=500&offset=0`,
       {
         method: 'POST',
-        body: JSON.stringify({ filters: {}, sort: { createdOn: 'ASC' } }),
+        body: JSON.stringify({ values: [], filters: {}, sort: { createdOn: 'ASC' } }),
       }
     );
 
