@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Feature, FeaturesResponse } from '@/types/api';
-import { getBoard, toggleVote, createFeature } from '@/lib/mockApi';
+import { getBoard, toggleVote, createFeature } from '@/lib/api';
 import { IconPlanned, IconInDevelopment, IconReleased, IconCaretUp, IconInfo, IconChevronDown, IconFileExcel, IconBookOpenReader } from '@/components/StatusIcons';
 
 function tagClass(tag: string): string {
@@ -25,12 +25,7 @@ export default function HomePage() {
   useEffect(() => {
     getBoard()
       .then(board => {
-        // Merge persisted triage items from localStorage
-        let saved: Feature[] = [];
-        try {
-          saved = JSON.parse(localStorage.getItem('triage_requests') ?? '[]');
-        } catch { /* ignore */ }
-        setFeatures({ ...board, triage: [...saved, ...(board.triage ?? [])] });
+        setFeatures(board);
         const voted = new Set<string | number>();
         [...board.planned, ...board.indev, ...board.released].forEach(f => {
           if (f.hasVoted) voted.add(f.id);
@@ -134,7 +129,6 @@ export default function HomePage() {
         priority,
         reqType: rqPref === 'paid' ? 'Customer' : 'Internal',
       });
-      // Persist to localStorage so it survives page reload
       const newFeature: Feature = {
         id: result.id,
         title: descValue.trim().slice(0, 120) || 'Feature Request',
@@ -148,10 +142,6 @@ export default function HomePage() {
         createdAt: new Date().toISOString().slice(0, 10),
         targetRelease: '',
       };
-      try {
-        const existing: Feature[] = JSON.parse(localStorage.getItem('triage_requests') ?? '[]');
-        localStorage.setItem('triage_requests', JSON.stringify([newFeature, ...existing]));
-      } catch { /* ignore */ }
       setFeatures(prev => ({ ...prev, triage: [newFeature, ...(prev.triage ?? [])] }));
       setRqStep(5);
     } catch (err) {
