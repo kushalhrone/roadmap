@@ -4,7 +4,6 @@ import { mapRecord } from '@/lib/hroneMapper';
 import type { FeaturesResponse } from '@/types/api';
 
 const OBJECT_ID = process.env.HRONE_OBJECT_ID!;
-const VIEW_ID = process.env.HRONE_VIEW_ID!;
 
 interface HRoneListResponse {
   data: Array<{ id: string; values: Array<{ key: string; value: unknown }>; createdOn: number }>;
@@ -14,7 +13,7 @@ interface HRoneListResponse {
 export async function GET() {
   try {
     const res = await hroneRequest<HRoneListResponse>(
-      `/api/objects/${OBJECT_ID}/views/${VIEW_ID}/records?limit=200&offset=0`,
+      `/api/objects/${OBJECT_ID}/records?limit=500&offset=0`,
       {
         method: 'POST',
         body: JSON.stringify({ filters: {}, sort: { createdOn: 'ASC' } }),
