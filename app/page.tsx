@@ -25,7 +25,12 @@ export default function HomePage() {
   useEffect(() => {
     getBoard()
       .then(board => {
-        setFeatures(board);
+        // Merge persisted triage items from localStorage
+        let saved: Feature[] = [];
+        try {
+          saved = JSON.parse(localStorage.getItem('triage_requests') ?? '[]');
+        } catch { /* ignore */ }
+        setFeatures({ ...board, triage: [...saved, ...(board.triage ?? [])] });
         const voted = new Set<string | number>();
         [...board.planned, ...board.indev, ...board.released].forEach(f => {
           if (f.hasVoted) voted.add(f.id);
@@ -129,7 +134,7 @@ export default function HomePage() {
         priority,
         reqType: rqPref === 'paid' ? 'Customer' : 'Internal',
       });
-      // Directly inject into triage state — no async getBoard dependency
+      // Persist to localStorage so it survives page reload
       const newFeature: Feature = {
         id: result.id,
         title: descValue.trim().slice(0, 120) || 'Feature Request',
@@ -143,6 +148,10 @@ export default function HomePage() {
         createdAt: new Date().toISOString().slice(0, 10),
         targetRelease: '',
       };
+      try {
+        const existing: Feature[] = JSON.parse(localStorage.getItem('triage_requests') ?? '[]');
+        localStorage.setItem('triage_requests', JSON.stringify([newFeature, ...existing]));
+      } catch { /* ignore */ }
       setFeatures(prev => ({ ...prev, triage: [newFeature, ...(prev.triage ?? [])] }));
       setRqStep(5);
     } catch (err) {
