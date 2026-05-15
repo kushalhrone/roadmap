@@ -25,6 +25,7 @@ export default function HomePage() {
   useEffect(() => {
     getBoard()
       .then(board => {
+        console.log('[board loaded]', { planned: board.planned.length, indev: board.indev.length, released: board.released.length, triage: board.triage?.length ?? 0 });
         setFeatures(board);
         const voted = new Set<string | number>();
         [...board.planned, ...board.indev, ...board.released].forEach(f => {
@@ -36,7 +37,9 @@ export default function HomePage() {
   }, []);
   const [upvoteHintShown, setUpvoteHintShown] = useState(false);
   const [upvoteHintPos, setUpvoteHintPos] = useState<{ left: number; top: number } | null>(null);
-  const [activeTab, setActiveTab] = useState<'roadmap' | 'requested'>('roadmap');
+  const [activeTab, setActiveTab] = useState<'roadmap' | 'requested'>(() => {
+    try { return (localStorage.getItem('activeTab') as 'roadmap' | 'requested') || 'roadmap'; } catch { return 'roadmap'; }
+  });
   const [selectedFeature, setSelectedFeature] = useState<Feature | null>(null);
   const [showPhilosophy, setShowPhilosophy] = useState(false);
   const [philosophyStep, setPhilosophyStep] = useState(1);
@@ -122,6 +125,7 @@ export default function HomePage() {
     setSubmitError(null);
     try {
       const priority = selectedPriority.replace('🔥 ', '');
+      console.log('[submit] calling createFeature with:', { module: formModule, reqFor: formReqFor, description: descValue, priority, reqType: rqPref === 'paid' ? 'Customer' : 'Internal' });
       const result = await createFeature({
         module: formModule,
         reqFor: formReqFor,
@@ -129,6 +133,7 @@ export default function HomePage() {
         priority,
         reqType: rqPref === 'paid' ? 'Customer' : 'Internal',
       });
+      console.log('[submit] createFeature result:', result);
       const newFeature: Feature = {
         id: result.id,
         title: descValue.trim().slice(0, 120) || 'Feature Request',
@@ -145,6 +150,7 @@ export default function HomePage() {
       setFeatures(prev => ({ ...prev, triage: [newFeature, ...(prev.triage ?? [])] }));
       setRqStep(5);
     } catch (err) {
+      console.error('[submit] ERROR:', err);
       setSubmitError(err instanceof Error ? err.message : 'Submission failed. Please try again.');
     } finally {
       setIsSubmitting(false);

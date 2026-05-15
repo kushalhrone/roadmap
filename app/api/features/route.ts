@@ -14,6 +14,7 @@ export async function POST(req: NextRequest) {
     const { module, reqFor, description, priority, reqType } = await req.json();
     const title = (description as string)?.trim().slice(0, 120) || 'Feature Request';
 
+    console.log('[POST /api/features] body:', { module, reqFor, description, priority, reqType });
     const result = await hroneRequest<{ id: string }>(
       `/api/objects/${OBJECT_ID}/records`,
       {
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
       }
     );
 
+    console.log('[POST /api/features] hrone result:', result);
     return NextResponse.json({ id: result.id, status: 'triage' }, { status: 201 });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to create feature';
